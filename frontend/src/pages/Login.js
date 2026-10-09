@@ -4,20 +4,56 @@ export default function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleSubmit = (e) => {
+  // SHA-256 hash of authorized password (ensures plaintext is never exposed in GitHub code)
+  const AUTH_HASH = '5e4fc8f86c3f4eb54c57cbb3ac78ee49ce1cf93c76b1d4428ee5c42abf883770';
+
+  const verifyPassword = async (pwd) => {
+    try {
+      if (window.crypto && window.crypto.subtle) {
+        const buffer = new TextEncoder().encode(pwd);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer);
+        const hashHex = Array.from(new Uint8Array(hashBuffer))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
+        return hashHex === AUTH_HASH;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
     if (!email || !password) {
-      setError('Please provide both email and password.');
+      setError('Please provide both username and password.');
       return;
     }
 
-    // Demo authentication flow - does not send secrets or hardcode sensitive data
-    onLogin({
-      email,
-      name: email.split('@')[0],
-      role: 'Administrator'
-    });
+    setIsVerifying(true);
+    try {
+      const isValid = await verifyPassword(password);
+      if (!isValid) {
+        setError('Incorrect password. Access denied.');
+        setIsVerifying(false);
+        return;
+      }
+
+      const displayName = email.includes('@') ? email.split('@')[0] : email;
+      onLogin({
+        email,
+        name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+        role: 'Administrator'
+      });
+    } catch (err) {
+      setError('Authentication failed. Please try again.');
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   return (
@@ -36,13 +72,13 @@ export default function Login({ onLogin }) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label className="form-label">Username / Email</label>
             <input
-              type="email"
+              type="text"
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
+              placeholder="e.g. boopathi or admin"
               required
             />
           </div>
@@ -63,9 +99,10 @@ export default function Login({ onLogin }) {
             <button
               type="submit"
               className="btn btn-primary"
-              style={{ width: '100%', padding: '0.75rem' }}
+              disabled={isVerifying}
+              style={{ width: '100%', padding: '0.75rem', opacity: isVerifying ? 0.7 : 1 }}
             >
-              Sign In
+              {isVerifying ? 'Verifying...' : 'Sign In'}
             </button>
           </div>
         </form>
