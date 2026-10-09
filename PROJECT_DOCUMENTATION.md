@@ -9,6 +9,8 @@ This project is a **Production-Ready Enterprise Web Application** deployed entir
 It allows a company to manage its employees (create, view, update, delete, and filter employees by department).
 
 ### Key Highlights:
+- **Live AWS CloudFront URL**: [https://d2c62ftth95z24.cloudfront.net](https://d2c62ftth95z24.cloudfront.net)
+- **Permanent Free Demo URL (Vercel)**: [https://bm-employee-management-aws.vercel.app](https://bm-employee-management-aws.vercel.app)
 - **Frontend**: Built with **React 18** (Fast, clean modern UI).
 - **Backend API**: Built with **Node.js & Express** with 13 automated unit tests.
 - **Database**: **Amazon RDS PostgreSQL 16** running in **Multi-AZ** (high availability).
