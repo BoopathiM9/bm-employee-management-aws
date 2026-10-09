@@ -1,0 +1,86 @@
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci-cd.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # Required for AWS OIDC authentication
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  S3_BUCKET: bm-frontend-app-20261008182756129800000001
+  ASG_NAME: bm-backend-asg-20261008182841353500000003
+
+jobs:
+  test-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run Backend Unit Tests
+        working-directory: ./backend
+        run: npm test
+
+      - name: Package Backend Code
+        run: |
+          cd backend
+          zip -r ../backend.zip src package.json package-lock.json
+          cd ..
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          role-session-name: GitHubActions-BackendDeploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Upload Artifact to S3
+        run: |
+          aws s3 cp backend.zip s3://${{ env.S3_BUCKET }}/deployments/backend.zip
+
+      - name: Deploy Code to EC2 via AWS Systems Manager
+        run: |
+          # Fetch running EC2 instance IDs from Auto Scaling Group
+          INSTANCE_IDS=$(aws autoscaling describe-auto-scaling-groups \
+            --auto-scaling-group-names ${{ env.ASG_NAME }} \
+            --query "AutoScalingGroups[0].Instances[?LifecycleState=='InService'].InstanceId" \
+            --output text)
+
+          if [ -n "$INSTANCE_IDS" ]; then
+            echo "Deploying to instances: $INSTANCE_IDS"
+            aws ssm send-command \
+              --instance-ids $INSTANCE_IDS \
+              --document-name "AWS-RunShellScript" \
+              --parameters 'commands=[
+                "cd /opt/bm-app",
+                "aws s3 cp s3://'${{ env.S3_BUCKET }}'/deployments/backend.zip backend.zip",
+                "unzip -o backend.zip -d /opt/bm-app/backend || true",
+                "cd /opt/bm-app/backend",
+                "npm install --omit=dev",
+                "systemctl restart bm-backend",
+                "sleep 3",
+                "curl -s http://localhost:8080/health"
+              ]' \
+              --comment "Automated deployment from GitHub Actions"
+          else
+            echo "No in-service instances found to deploy to."
+          fi
