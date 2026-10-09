@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:match*",
+      "destination": "https://d2c62ftth95z24.cloudfront.net/api/:match*"
+    },
+    {
+      "source": "/health",
+      "destination": "https://d2c62ftth95z24.cloudfront.net/health"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
