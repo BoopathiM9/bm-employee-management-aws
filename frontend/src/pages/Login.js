@@ -29,25 +29,28 @@ export default function Login({ onLogin }) {
     e.preventDefault();
     setError('');
 
-    if (!email || !password) {
+    const trimmedUser = email.trim().toLowerCase();
+
+    if (!trimmedUser || !password) {
       setError('Please provide both username and password.');
       return;
     }
 
     setIsVerifying(true);
     try {
-      const isValid = await verifyPassword(password);
-      if (!isValid) {
-        setError('Incorrect password. Access denied.');
+      const isPasswordValid = await verifyPassword(password);
+      const isUserValid = trimmedUser === 'admin';
+
+      if (!isUserValid || !isPasswordValid) {
+        setError('Invalid username or password.');
         setIsVerifying(false);
         return;
       }
 
-      const displayName = email.includes('@') ? email.split('@')[0] : email;
       onLogin({
-        email,
-        name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-        role: 'Administrator'
+        email: 'admin@enterprise.internal',
+        name: 'Administrator',
+        role: 'System Administrator'
       });
     } catch (err) {
       setError('Authentication failed. Please try again.');
@@ -72,13 +75,14 @@ export default function Login({ onLogin }) {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Username / Email</label>
+            <label className="form-label">Username</label>
             <input
               type="text"
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. boopathi or admin"
+              placeholder="Enter username"
+              autoComplete="username"
               required
             />
           </div>
@@ -90,7 +94,8 @@ export default function Login({ onLogin }) {
               className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="Enter password"
+              autoComplete="current-password"
               required
             />
           </div>
