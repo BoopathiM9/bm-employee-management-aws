@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 export default function Login({ onLogin }) {
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
@@ -42,7 +42,7 @@ export default function Login({ onLogin }) {
               className="form-input"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@example.com"
+              placeholder="Enter your email address"
               required
             />
           </div>
@@ -54,7 +54,7 @@ export default function Login({ onLogin }) {
               className="form-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Enter your password"
               required
             />
           </div>

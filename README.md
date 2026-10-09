@@ -9,10 +9,12 @@ A highly available, production-grade 3-tier enterprise employee management porta
 
 ---
 
-## 🌐 Live Production Application
+## 🌐 Live Production Application & Documentation
 
-- **Live Web Portal (HTTPS)**: [https://d2c62ftth95z24.cloudfront.net](https://d2c62ftth95z24.cloudfront.net)
-- **Application Load Balancer**: [http://bm-alb-457926190.us-east-1.elb.amazonaws.com/health](http://bm-alb-457926190.us-east-1.elb.amazonaws.com/health)
+- **Official PDF Documentation**: [Download `PROJECT_DOCUMENTATION.pdf`](./PROJECT_DOCUMENTATION.pdf)
+- **Live AWS CloudFront Portal (HTTPS)**: [https://d2c62ftth95z24.cloudfront.net](https://d2c62ftth95z24.cloudfront.net)
+- **Permanent Free Demo Portal (Vercel)**: [https://bm-employee-management-aws.vercel.app](https://bm-employee-management-aws.vercel.app)
+- **Application Load Balancer Health Endpoint**: [http://bm-alb-457926190.us-east-1.elb.amazonaws.com/health](http://bm-alb-457926190.us-east-1.elb.amazonaws.com/health)
 
 ---
 

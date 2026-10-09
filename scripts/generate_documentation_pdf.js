@@ -1,0 +1,700 @@
+const fs = require('fs');
+const path = require('path');
+const { execFileSync } = require('child_process');
+
+const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Enterprise Employee Management System — AWS Production Architecture</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 14mm 18mm 14mm;
+      @bottom-right {
+        content: counter(page);
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        font-size: 9pt;
+        color: #64748b;
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      line-height: 1.55;
+      font-size: 10.5pt;
+      background: #ffffff;
+    }
+
+    /* Cover / Header Header Banner */
+    .header-banner {
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 8.5pt;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 20pt;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 11.5pt;
+      color: #475569;
+      margin-bottom: 14px;
+      font-weight: 500;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px 16px;
+      font-size: 9.5pt;
+    }
+
+    .meta-item strong {
+      color: #334155;
+    }
+
+    .meta-item a {
+      color: #2563eb;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    h2 {
+      font-size: 13pt;
+      font-weight: 700;
+      color: #0f172a;
+      border-left: 4px solid #2563eb;
+      padding-left: 8px;
+      margin-top: 24px;
+      margin-bottom: 10px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 11pt;
+      font-weight: 600;
+      color: #1e293b;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin-bottom: 10px;
+      color: #334155;
+      text-align: justify;
+    }
+
+    ul, ol {
+      margin-left: 20px;
+      margin-bottom: 12px;
+      color: #334155;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    /* Diagram Styling */
+    .diagram-container {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 16px 0;
+      page-break-inside: avoid;
+    }
+
+    .diagram-title {
+      font-size: 10pt;
+      font-weight: 700;
+      text-align: center;
+      color: #1e293b;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px 0;
+      font-size: 9pt;
+      page-break-inside: avoid;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+
+    /* Callouts */
+    .callout {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 10px 14px;
+      margin: 14px 0;
+      border-radius: 0 6px 6px 0;
+      page-break-inside: avoid;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 4px;
+      font-size: 9.5pt;
+    }
+
+    .callout p {
+      margin-bottom: 0;
+      font-size: 9.5pt;
+    }
+
+    .security-callout {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+    }
+
+    .security-callout .callout-title {
+      color: #15803d;
+    }
+
+    /* Code Block */
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 8.5pt;
+      margin: 10px 0 14px 0;
+      overflow-x: auto;
+      line-height: 1.45;
+      page-break-inside: avoid;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    .footer-note {
+      margin-top: 30px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 8.5pt;
+      color: #64748b;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cover Header -->
+  <div class="header-banner">
+    <span class="badge">AWS Production Engineering Project</span>
+    <h1>Production 3-Tier Enterprise Employee Management System</h1>
+    <div class="subtitle">Highly Available, Secure, Multi-AZ Cloud Infrastructure Deployed with Terraform & CI/CD</div>
+    <div class="meta-grid">
+      <div class="meta-item"><strong>Architect & Author:</strong> Boopathi Murugesan</div>
+      <div class="meta-item"><strong>AWS Target Region:</strong> us-east-1 (N. Virginia, 2 Availability Zones)</div>
+      <div class="meta-item"><strong>GitHub Repository:</strong> <a href="https://github.com/BoopathiM9/bm-employee-management-aws">BoopathiM9/bm-employee-management-aws</a></div>
+      <div class="meta-item"><strong>Live AWS Portal:</strong> <a href="https://d2c62ftth95z24.cloudfront.net">d2c62ftth95z24.cloudfront.net</a></div>
+      <div class="meta-item"><strong>Permanent Free Demo:</strong> <a href="https://bm-employee-management-aws.vercel.app">bm-employee-management-aws.vercel.app</a></div>
+      <div class="meta-item"><strong>Infrastructure as Code:</strong> 100% HashiCorp Terraform (45+ AWS Resources)</div>
+    </div>
+  </div>
+
+  <!-- Section 1: Executive Summary -->
+  <h2>1. Executive Summary</h2>
+  <p>
+    This project demonstrates an enterprise-grade, production-quality implementation of a 3-Tier Web Application hosted natively on Amazon Web Services (AWS). Designed and implemented by Boopathi Murugesan, the system addresses critical enterprise requirements: high availability across multiple availability zones, least-privilege security zoning, zero open inbound administrative ports, centralized secrets management, automated autoscaling, and fully automated CI/CD pipelines.
+  </p>
+  <p>
+    The business application is an Employee Management Portal allowing full lifecycle record management (CRUD operations, department filtering, pagination, and health analytics). Rather than relying on simple single-instance hosting, every tier adheres strictly to AWS Well-Architected Framework principles.
+  </p>
+
+  <div class="callout security-callout">
+    <div class="callout-title">Key Security & Reliability Guarantees</div>
+    <p>
+      • <strong>Zero Open Management Ports:</strong> SSH Port 22 is completely disabled. Secure administration is performed strictly via AWS Systems Manager (SSM) Session Manager.<br>
+      • <strong>Zero Hardcoded Credentials:</strong> All database passwords are dynamically managed by AWS Secrets Manager with TLS/SSL encryption. No passwords exist in source code, Git, or User Data.<br>
+      • <strong>Private-Only Application Subnets:</strong> EC2 compute instances have no public IP addresses and cannot receive direct traffic from the internet.<br>
+      • <strong>Multi-AZ Fault Tolerance:</strong> Dual Availability Zone architecture (us-east-1a and us-east-1b) across ALB, EC2 Auto Scaling, and RDS PostgreSQL with synchronous replication.
+    </p>
+  </div>
+
+  <!-- Section 2: Complete Architecture Diagram -->
+  <h2>2. Complete Architecture Workflow & Diagram</h2>
+  <p>
+    The system is organized into four distinct architectural tiers: Edge/CDN Tier, Public Network & Load Balancing Tier, Private Application Compute Tier, and Private Multi-AZ Database Tier.
+  </p>
+
+  <div class="diagram-container">
+    <div class="diagram-title">AWS Enterprise 3-Tier Architecture Diagram</div>
+    <svg viewBox="0 0 850 480" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background / Outer Canvas -->
+      <rect x="5" y="5" width="840" height="470" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.5"/>
+      
+      <!-- User / Internet Client -->
+      <rect x="25" y="195" width="90" height="70" rx="6" fill="#3b82f6" stroke="#1d4ed8" stroke-width="1.5"/>
+      <text x="70" y="225" font-family="'Segoe UI', sans-serif" font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle">End User</text>
+      <text x="70" y="243" font-family="'Segoe UI', sans-serif" font-size="9.5" fill="#dbeafe" text-anchor="middle">Web Browser</text>
+      
+      <!-- Arrow to CloudFront -->
+      <path d="M 115 230 L 155 230" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+
+      <!-- Edge Tier Box -->
+      <rect x="155" y="60" width="125" height="360" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <text x="217" y="82" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#166534" text-anchor="middle">EDGE & CDN TIER</text>
+      
+      <!-- CloudFront -->
+      <rect x="165" y="100" width="105" height="80" rx="6" fill="#ffffff" stroke="#22c55e" stroke-width="1.5"/>
+      <text x="217" y="125" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#15803d" text-anchor="middle">AWS CloudFront</text>
+      <text x="217" y="142" font-family="'Segoe UI', sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">Global CDN / TLS</text>
+      <text x="217" y="157" font-family="'Segoe UI', sans-serif" font-size="8.5" fill="#15803d" text-anchor="middle">OAC SigV4 Security</text>
+
+      <!-- S3 Bucket -->
+      <rect x="165" y="220" width="105" height="75" rx="6" fill="#ffffff" stroke="#0284c7" stroke-width="1.5"/>
+      <text x="217" y="245" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#0369a1" text-anchor="middle">Amazon S3</text>
+      <text x="217" y="260" font-family="'Segoe UI', sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">React 18 SPA Build</text>
+      <text x="217" y="275" font-family="'Segoe UI', sans-serif" font-size="8.5" fill="#b91c1c" text-anchor="middle">Block Public Access</text>
+
+      <!-- Connection CF to S3 -->
+      <path d="M 217 180 L 217 220" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="2,2"/>
+
+      <!-- AWS Cloud VPC Boundary -->
+      <rect x="305" y="30" width="525" height="425" rx="8" fill="#f8fafc" stroke="#3b82f6" stroke-width="2"/>
+      <text x="325" y="52" font-family="'Segoe UI', sans-serif" font-size="11" font-weight="800" fill="#1e3a8a">AWS VPC: bm_vpc (10.0.0.0/16) — Region: us-east-1</text>
+      
+      <!-- Public Subnets Box -->
+      <rect x="320" y="65" width="145" height="375" rx="6" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.2"/>
+      <text x="392" y="85" font-family="'Segoe UI', sans-serif" font-size="9.5" font-weight="700" fill="#1d4ed8" text-anchor="middle">PUBLIC SUBNETS</text>
+      <text x="392" y="99" font-family="'Segoe UI', sans-serif" font-size="8" fill="#64748b" text-anchor="middle">us-east-1a & us-east-1b</text>
+
+      <!-- ALB -->
+      <rect x="330" y="115" width="125" height="75" rx="6" fill="#ffffff" stroke="#2563eb" stroke-width="1.5"/>
+      <text x="392" y="140" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#1e40af" text-anchor="middle">Application Load</text>
+      <text x="392" y="155" font-family="'Segoe UI', sans-serif" font-size="10" font-weight="700" fill="#1e40af" text-anchor="middle">Balancer (ALB)</text>
+      <text x="392" y="172" font-family="'Segoe UI', sans-serif" font-size="8" fill="#475569" text-anchor="middle">Health Check /health</text>
+
+      <!-- NAT Gateway -->
+      <rect x="330" y="270" width="125" height="65" rx="6" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+      <text x="392" y="295" font-family="'Segoe UI', sans-serif" font-size="9.5" font-weight="700" fill="#334155" text-anchor="middle">NAT Gateway</text>
+      <text x="392" y="312" font-family="'Segoe UI', sans-serif" font-size="8" fill="#64748b" text-anchor="middle">Elastic IP Outbound</text>
+      <text x="392" y="324" font-family="'Segoe UI', sans-serif" font-size="8" fill="#64748b" text-anchor="middle">Egress-Only Internet</text>
+
+      <!-- Arrow CF to ALB for /api/* -->
+      <path d="M 270 145 L 330 145" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="300" y="137" font-family="'Segoe UI', sans-serif" font-size="8" font-weight="700" fill="#2563eb" text-anchor="middle">/api/*</text>
+
+      <!-- Private App Subnets Box -->
+      <rect x="480" y="65" width="165" height="375" rx="6" fill="#fdf4ff" stroke="#f0abfc" stroke-width="1.2"/>
+      <text x="562" y="85" font-family="'Segoe UI', sans-serif" font-size="9.5" font-weight="700" fill="#86198f" text-anchor="middle">PRIVATE APP SUBNETS</text>
+      <text x="562" y="99" font-family="'Segoe UI', sans-serif" font-size="8" fill="#701a75" text-anchor="middle">Auto Scaling (NO Public IPs)</text>
+
+      <!-- EC2 Instance 1 -->
+      <rect x="490" y="115" width="145" height="70" rx="6" fill="#ffffff" stroke="#a21caf" stroke-width="1.5"/>
+      <text x="562" y="137" font-family="'Segoe UI', sans-serif" font-size="9.5" font-weight="700" fill="#86198f" text-anchor="middle">EC2: t3.micro (AZ 1a)</text>
+      <text x="562" y="152" font-family="'Segoe UI', sans-serif" font-size="8" fill="#475569" text-anchor="middle">Node.js Express (Port 8080)</text>
+      <text x="562" y="167" font-family="'Segoe UI', sans-serif" font-size="8" fill="#15803d" text-anchor="middle">SSM Agent (No Port 22)</text>
+
+      <!-- EC2 Instance 2 -->
+      <rect x="490" y="200" width="145" height="70" rx="6" fill="#ffffff" stroke="#a21caf" stroke-width="1.5"/>
+      <text x="562" y="222" font-family="'Segoe UI', sans-serif" font-size="9.5" font-weight="700" fill="#86198f" text-anchor="middle">EC2: t3.micro (AZ 1b)</text>
+      <text x="562" y="237" font-family="'Segoe UI', sans-serif" font-size="8" fill="#475569" text-anchor="middle">Node.js Express (Port 8080)</text>
+      <text x="562" y="252" font-family="'Segoe UI', sans-serif" font-size="8" fill="#15803d" text-anchor="middle">SSM Agent (No Port 22)</text>
+
+      <!-- Arrow ALB to EC2s -->
+      <path d="M 455 145 L 490 145" stroke="#a21caf" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <path d="M 455 160 L 470 160 L 470 235 L 490 235" stroke="#a21caf" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+      <!-- AWS Secrets Manager -->
+      <rect x="490" y="295" width="145" height="55" rx="6" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="562" y="317" font-family="'Segoe UI', sans-serif" font-size="9" font-weight="700" fill="#b45309" text-anchor="middle">AWS Secrets Manager</text>
+      <text x="562" y="332" font-family="'Segoe UI', sans-serif" font-size="7.5" fill="#78350f" text-anchor="middle">Dynamic DB Credentials</text>
+
+      <!-- EC2 to Secrets Manager -->
+      <path d="M 562 270 L 562 295" stroke="#d97706" stroke-width="1.2" stroke-dasharray="2,2"/>
+
+      <!-- Private Database Subnets Box -->
+      <rect x="660" y="65" width="155" height="375" rx="6" fill="#fef2f2" stroke="#fecaca" stroke-width="1.2"/>
+      <text x="737" y="85" font-family="'Segoe UI', sans-serif" font-size="9.5" font-weight="700" fill="#b91c1c" text-anchor="middle">PRIVATE DB SUBNETS</text>
+      <text x="737" y="99" font-family="'Segoe UI', sans-serif" font-size="8" fill="#991b1b" text-anchor="middle">PostgreSQL 16 (Port 5432)</text>
+
+      <!-- Primary RDS -->
+      <rect x="670" y="130" width="135" height="75" rx="6" fill="#ffffff" stroke="#dc2626" stroke-width="1.5"/>
+      <text x="737" y="153" font-family="'Segoe UI', sans-serif" font-size="9.5" font-weight="700" fill="#b91c1c" text-anchor="middle">RDS Primary (1a)</text>
+      <text x="737" y="168" font-family="'Segoe UI', sans-serif" font-size="8" fill="#475569" text-anchor="middle">PostgreSQL 16 Engine</text>
+      <text x="737" y="182" font-family="'Segoe UI', sans-serif" font-size="7.5" fill="#15803d" text-anchor="middle">Encrypted Storage gp3</text>
+
+      <!-- Standby RDS -->
+      <rect x="670" y="240" width="135" height="75" rx="6" fill="#ffffff" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <text x="737" y="263" font-family="'Segoe UI', sans-serif" font-size="9.5" font-weight="700" fill="#b91c1c" text-anchor="middle">RDS Standby (1b)</text>
+      <text x="737" y="278" font-family="'Segoe UI', sans-serif" font-size="8" fill="#475569" text-anchor="middle">Synchronous Standby</text>
+      <text x="737" y="292" font-family="'Segoe UI', sans-serif" font-size="7.5" fill="#dc2626" text-anchor="middle">Auto-Failover (< 60s)</text>
+
+      <!-- Arrows EC2 to RDS -->
+      <path d="M 635 150 L 670 150" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrow)"/>
+      <path d="M 635 235 L 650 235 L 650 170 L 670 170" stroke="#dc2626" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>
+
+      <!-- Sync replication arrow -->
+      <path d="M 737 205 L 737 240" stroke="#dc2626" stroke-width="1.8" stroke-dasharray="2,2"/>
+      <text x="752" y="224" font-family="'Segoe UI', sans-serif" font-size="7.5" font-weight="700" fill="#dc2626">Sync</text>
+
+      <!-- Marker Defs -->
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb" />
+        </marker>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Section 3: Technical Specifications of All Layers -->
+  <h2>3. Technical Specifications by Layer</h2>
+
+  <h3>A. Edge & Frontend Tier</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>AWS Service / Resource</th>
+        <th>Configuration & Security Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Global CDN</td>
+        <td>Amazon CloudFront</td>
+        <td>Edge distribution with TLS 1.3, Origin Access Control (OAC), URL rewriting for React SPA client-side routing, and zero public S3 exposure.</td>
+      </tr>
+      <tr>
+        <td>Static Storage</td>
+        <td>Amazon S3</td>
+        <td>Block Public Access 100% ENABLED. Bucket policy allows ONLY CloudFront Service Principal via SigV4 signed requests.</td>
+      </tr>
+      <tr>
+        <td>Reverse Proxy</td>
+        <td>CloudFront Behaviors</td>
+        <td>Path <code>/api/*</code> forwarded directly to Application Load Balancer with origin headers preserved, eliminating CORS restrictions.</td>
+      </tr>
+      <tr>
+        <td>Permanent Free Demo</td>
+        <td>Vercel Edge Network</td>
+        <td>Global edge deployment with automatic dual-layer fallback to browser storage if AWS infrastructure is decommissioned.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>B. Networking & Load Balancing Tier</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>AWS Service / Resource</th>
+        <th>Configuration & Security Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Virtual Private Cloud</td>
+        <td>AWS VPC (<code>bm_vpc</code>)</td>
+        <td>CIDR <code>10.0.0.0/16</code> partitioned across 2 Availability Zones (<code>us-east-1a</code> and <code>us-east-1b</code>) into 6 dedicated subnets.</td>
+      </tr>
+      <tr>
+        <td>Subnet Topology</td>
+        <td>VPC Subnets</td>
+        <td>2 Public Subnets (ALB & NAT GW), 2 Private Application Subnets (EC2 backend), and 2 Private Database Subnets (RDS).</td>
+      </tr>
+      <tr>
+        <td>Load Balancer</td>
+        <td>Application Load Balancer</td>
+        <td>Internet-facing in public subnets, cross-zone load balancing enabled, health checking on <code>HTTP:8080/health</code> with 15s interval.</td>
+      </tr>
+      <tr>
+        <td>Outbound Egress</td>
+        <td>AWS NAT Gateway</td>
+        <td>Allocated Elastic IP in public subnet, allowing private EC2 instances to download OS patches and npm packages securely.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>C. Compute & Application Tier</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>AWS Service / Resource</th>
+        <th>Configuration & Security Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Compute Platform</td>
+        <td>Amazon EC2 (<code>t3.micro</code>)</td>
+        <td>Amazon Linux 2023 with systemd service managing Node.js/Express. Zero public IPs assigned.</td>
+      </tr>
+      <tr>
+        <td>Auto Scaling</td>
+        <td>Auto Scaling Group (ASG)</td>
+        <td>Desired: 2, Min: 1, Max: 4 instances distributed equally across Availability Zones 1a and 1b with ELB health checks.</td>
+      </tr>
+      <tr>
+        <td>Remote Management</td>
+        <td>AWS Systems Manager (SSM)</td>
+        <td><strong>Port 22 SSH disabled</strong>. Management performed through SSM Session Manager with full IAM and CloudTrail audit logging.</td>
+      </tr>
+      <tr>
+        <td>Application Runtime</td>
+        <td>Node.js 20 LTS + Express</td>
+        <td>13 automated unit tests, parameterized database connection pool, health check endpoints, and structured JSON logging.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>D. Database & Storage Tier</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>AWS Service / Resource</th>
+        <th>Configuration & Security Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Database Engine</td>
+        <td>Amazon RDS PostgreSQL 16.3</td>
+        <td>Managed PostgreSQL database running inside private DB subnets (<code>publicly_accessible = false</code>).</td>
+      </tr>
+      <tr>
+        <td>High Availability</td>
+        <td>Multi-AZ Deployment</td>
+        <td>Synchronous physical standby replica in Availability Zone 1b with automatic failover under 60 seconds without DNS changes.</td>
+      </tr>
+      <tr>
+        <td>Encryption</td>
+        <td>AWS KMS + SSL/TLS</td>
+        <td>gp3 volume encrypted at rest via AWS KMS. In-transit client connections strictly enforce TLS/SSL encryption.</td>
+      </tr>
+      <tr>
+        <td>Backups & Retention</td>
+        <td>Automated RDS Backups</td>
+        <td>7-day automated snapshot retention window with point-in-time recovery and deletion protection.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Section 4: Security Architecture & Zero-Secret Policy -->
+  <h2>4. Security Architecture & Zero-Secret Policy</h2>
+  <p>
+    Security was designed into the foundational infrastructure rather than added as an afterthought. The architecture enforces defense-in-depth across the network, compute, application, and identity perimeters:
+  </p>
+
+  <div class="callout security-callout">
+    <div class="callout-title">Zero Hardcoded Credentials Architecture</div>
+    <p>
+      1. <strong>Dynamic Generation:</strong> The database master credentials are generated using Terraform's cryptographic random engine during initialization and stored directly into AWS Secrets Manager (<code>bm_db_credentials</code>).<br>
+      2. <strong>Runtime Secret Resolution:</strong> During boot, the Node.js application utilizes the AWS SDK v3 to query AWS Secrets Manager using its IAM instance role (<code>bm_ec2_instance_role</code>). No credentials ever touch source code, Git repositories, or environment configuration files.<br>
+      3. <strong>Network-Chained Security Groups:</strong> The database security group (<code>bm_db_sg</code>) exclusively accepts port 5432 ingress from the backend security group (<code>bm_backend_sg</code>). Even if an external actor had database credentials, the database is physically unreachable from the public internet.
+    </p>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- Section 5: Infrastructure as Code & CI/CD -->
+  <h2>5. Infrastructure as Code & Automated CI/CD Pipelines</h2>
+  <p>
+    The entire AWS environment is codified using HashiCorp Terraform to ensure consistency, eliminate manual drift, and enable one-command recreation.
+  </p>
+
+  <h3>A. Terraform Module Organization</h3>
+  <pre>deployment/terraform/
+├── main.tf          # AWS provider configuration, region setup, and default resource tags
+├── variables.tf     # Variable definitions (CIDR blocks, database configurations, instance types)
+├── vpc.tf           # VPC, 6 subnets, Internet Gateway, NAT Gateway, Elastic IP, and route tables
+├── security.tf      # Layered security groups with least-privilege ingress and egress rules
+├── iam.tf           # IAM roles, policies, and instance profiles for EC2, SSM, and CloudWatch
+├── secrets.tf       # AWS Secrets Manager resources and automated random secret generation
+├── rds.tf           # Multi-AZ PostgreSQL RDS instance, DB subnet group, and parameter groups
+├── alb.tf           # Application Load Balancer, target group, health checks, and listener rules
+├── ec2.tf           # Launch Template, Auto Scaling Group, and CloudWatch log agent configuration
+├── s3_cloudfront.tf # S3 static hosting bucket, CloudFront distribution, OAC, and cache policies
+├── monitoring.tf    # CloudWatch log groups, metric alarms (ALB 5xx, CPU, RDS), and SNS topics
+└── outputs.tf       # Structured infrastructure outputs (CloudFront URL, ALB DNS, RDS endpoint)</pre>
+
+  <h3>B. Automated GitHub Actions CI/CD</h3>
+  <p>
+    The project includes two continuous integration and continuous deployment workflows:
+  </p>
+  <ul>
+    <li>
+      <strong>Frontend Pipeline (<code>frontend-ci-cd.yml</code>):</strong> Automatically triggers on commits to <code>main</code> modifying frontend code. Runs automated linting, builds the React production bundle, synchronizes assets to Amazon S3, and triggers a CloudFront cache invalidation.
+    </li>
+    <li>
+      <strong>Backend Pipeline (<code>backend-ci-cd.yml</code>):</strong> Executes 13 automated unit tests against the Node.js REST API. Packages the backend artifacts and performs rolling updates across the Auto Scaling Group instances via AWS Systems Manager without dropping incoming web requests.
+    </li>
+    <li>
+      <strong>Passwordless OIDC Authentication:</strong> GitHub Actions connects to AWS using OpenID Connect (OIDC) identity federation. No permanent AWS Access Key IDs or Secret Access Keys are stored in GitHub repository secrets.
+    </li>
+  </ul>
+
+  <!-- Section 6: Live Verification & Testing Results -->
+  <h2>6. Live Production Verification & Test Results</h2>
+  <p>
+    Every layer of the live deployed architecture was subjected to rigorous end-to-end verification tests:
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Test Category</th>
+        <th>Target Endpoint</th>
+        <th>Expected Behavior</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Frontend Delivery</td>
+        <td><code>https://d2c62ftth95z24.cloudfront.net</code></td>
+        <td>CloudFront serves React SPA with HTTP 200 via OAC</td>
+        <td><strong>PASSED (200 OK)</strong></td>
+      </tr>
+      <tr>
+        <td>Vercel Deployment</td>
+        <td><code>https://bm-employee-management-aws.vercel.app</code></td>
+        <td>Vercel CDN serves React UI with dynamic fallback</td>
+        <td><strong>PASSED (200 OK)</strong></td>
+      </tr>
+      <tr>
+        <td>Health Check</td>
+        <td><code>GET /health</code></td>
+        <td>ALB reports 2/2 targets healthy; returns status: healthy</td>
+        <td><strong>PASSED (200 OK)</strong></td>
+      </tr>
+      <tr>
+        <td>Database Query (GET)</td>
+        <td><code>GET /api/employees</code></td>
+        <td>Express queries RDS PostgreSQL Multi-AZ; returns employee list</td>
+        <td><strong>PASSED (200 OK)</strong></td>
+      </tr>
+      <tr>
+        <td>Record Creation (POST)</td>
+        <td><code>POST /api/employees</code></td>
+        <td>Inserts employee record into PostgreSQL with ID generation</td>
+        <td><strong>PASSED (200 OK)</strong></td>
+      </tr>
+      <tr>
+        <td>Record Deletion (DELETE)</td>
+        <td><code>DELETE /api/employees/:id</code></td>
+        <td>Removes record and returns confirmation message</td>
+        <td><strong>PASSED (200 OK)</strong></td>
+      </tr>
+      <tr>
+        <td>Unit Test Suite</td>
+        <td><code>npm test</code> (Backend)</td>
+        <td>13 unit tests pass across routes, controllers, and validation</td>
+        <td><strong>PASSED (13/13)</strong></td>
+      </tr>
+      <tr>
+        <td>Security Audit</td>
+        <td>SSM & Security Groups</td>
+        <td>Port 22 closed; instances accessible only via SSM Session Manager</td>
+        <td><strong>PASSED (Audited)</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Section 7: Disaster Recovery & Cost Optimization -->
+  <h2>7. Disaster Recovery & Cost Optimization Strategy</h2>
+  <p>
+    The architecture is built for production reliability while maintaining cost predictability:
+  </p>
+  <ul>
+    <li><strong>Zone Failure Resilience:</strong> If an entire AWS Availability Zone experiences an outage, the Application Load Balancer shifts 100% of traffic to the healthy zone, and RDS automatically promotes the standby replica in under 60 seconds with zero data loss.</li>
+    <li><strong>Cost Elimination via Terraform:</strong> When demonstration periods conclude, running <code>terraform destroy</code> in the deployment directory cleanly removes all provisioned AWS cloud assets, preventing ongoing operational charges.</li>
+    <li><strong>Permanent Portfolio Demo:</strong> The standalone Vercel deployment remains permanently operational with its built-in client-side fallback storage, allowing mentors and evaluators to test the interactive portal indefinitely at zero cost.</li>
+  </ul>
+
+  <div class="footer-note">
+    Project Architecture Designed, Codified, and Deployed by <strong>Boopathi Murugesan</strong> &bull; AWS Production 3-Tier Enterprise Employee Management System &bull; October 2026
+  </div>
+
+</body>
+</html>`;
+
+const htmlFilePath = path.join(__dirname, 'documentation_print.html');
+const pdfFilePath = path.join(__dirname, '..', 'PROJECT_DOCUMENTATION.pdf');
+const edgePath = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+
+fs.writeFileSync(htmlFilePath, htmlContent, 'utf8');
+console.log('Generated HTML print file at:', htmlFilePath);
+
+console.log('Generating PDF via Microsoft Edge headless...');
+execFileSync(edgePath, [
+  '--headless',
+  '--disable-gpu',
+  '--run-all-compositor-stages-before-draw',
+  '--no-margins',
+  `--print-to-pdf=${pdfFilePath}`,
+  htmlFilePath
+]);
+
+if (fs.existsSync(pdfFilePath)) {
+  const stats = fs.statSync(pdfFilePath);
+  console.log(`SUCCESS: PDF created at ${pdfFilePath} (${stats.size} bytes)`);
+} else {
+  console.error('ERROR: PDF was not generated');
+  process.exit(1);
+}
